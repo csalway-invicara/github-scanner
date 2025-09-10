@@ -1,6 +1,5 @@
 import os
 import sqlite3
-from datetime import datetime, timezone
 
 from dotenv import load_dotenv
 
@@ -9,37 +8,41 @@ from libs.github import get_branches, get_commit_data, get_org_repositories, get
 load_dotenv()
 
 GITHUB_ORG = os.getenv('GITHUB_ORG')
-API_TOKEN = os.getenv('API_FINE_GRAINED_TOKEN')
+API_TOKEN = os.getenv('API_PERSONAL_TOKEN')
 DB_FILEPATH = os.getenv('DB_FILEPATH')
 
-now = datetime.now(timezone.utc)
-
-# initialize database
 con = sqlite3.connect(DB_FILEPATH)
 con.row_factory = sqlite3.Row
 cur = con.cursor()
+
+# initialize database
 cur.execute("CREATE TABLE IF NOT EXISTS repositories (id INTEGER PRIMARY KEY, repo TEXT NOT NULL, UNIQUE(repo))")
 cur.execute("CREATE TABLE IF NOT EXISTS branches (id INTEGER PRIMARY KEY, repo TEXT NOT NULL, branch TEXT NOT NULL, commit_ref TEXT, commit_date TEXT, commit_email TEXT, tree_ref TEXT, UNIQUE(repo,branch))")
 cur.execute("CREATE TABLE IF NOT EXISTS files (id INTEGER PRIMARY KEY, repo TEXT NOT NULL, branch TEXT NOT NULL, path TEXT NOT NULL, type TEXT, UNIQUE(repo,branch,path))")
 
 # populate db with repositories (1 api call)
-res = cur.execute("SELECT * FROM repositories")
-if len(res.fetchall()) == 0:
-    for repo in get_org_repositories(API_TOKEN, GITHUB_ORG):
+answer = input("Do you want to refresh the repositories table? (y/n): ")
+if answer.strip().lower() == "y":
+    cur.execute("DELETE FROM repositories")
+    repos = get_org_repositories(API_TOKEN, GITHUB_ORG)
+    for repo in repos:
+        print(f"Adding repository `{repo['name']}`")
         cur.execute("INSERT INTO repositories (repo) VALUES (?)", [repo['name']])
+        con.commit()
+    print(f"Loaded {len(repos)} repositories.")
 
-con.commit()
-
-# populate db with branches (1 api call per repository)
-res = cur.execute("SELECT * FROM branches")
-if len(res.fetchall()) == 0:
+# populate db with branches (1 api call per repository - circa 209)
+answer = input("Do you want to refresh the branches table? (y/n): ")
+if answer.strip().lower() == "y":
+    cur.execute("DELETE FROM branches")
     res = cur.execute("SELECT * FROM repositories")
     for repo in res.fetchall():
-        for branch in get_branches(API_TOKEN, GITHUB_ORG, repo['repo']):
-            print(f"{repo['repo']}/{branch['name']}")
-            cur.execute("INSERT INTO branches (repo,branch,commit_ref) VALUES (?,?,?)", [repo['repo'], branch['name'], branch['commit']['sha']])
-
-con.commit()
+        branches = get_branches(API_TOKEN, GITHUB_ORG, repo['repo'])
+        for branch in branches:
+            print(f"Adding branch {repo['repo']}/{branch['name']}")
+            cur.execute("INSERT OR IGNORE INTO branches (repo,branch,commit_ref) VALUES (?,?,?)", [repo['repo'], branch['name'], branch['commit']['sha']])
+            con.commit()
+        print(f"Loaded {len(branches)} branches into {repo['repo']} repository.")
 
 # update branches commit data (1 api call per branch - branch count (>8000) is greater than api rate-limit (5000/hr), so you will have to re-run this script for the following to complete)
 res = cur.execute("SELECT * FROM branches WHERE tree_ref IS NULL")
