@@ -23,7 +23,8 @@ packages = [
     "strip-ansi@7.1.1",
     "supports-color@10.2.1",
     "supports-hyperlinks@4.1.1",
-    "wrap-ansi@9.0.1"
+    "wrap-ansi@9.0.1",
+    #"@babel/cli@7.15.4"  # test to make sure it works
 ]
 
 for dirpath, dirnames, filenames in os.walk(root_dir):
@@ -38,14 +39,14 @@ for dirpath, dirnames, filenames in os.walk(root_dir):
                     for k, v in data['dependencies'].items():
                         pkg = f"{k}@{v.get('version')}"
                         if pkg in packages:
-                            print(f"Found {pkg} in {filepath}")
+                            print(f"FOUND {pkg} in {filepath}")
                 
                 elif 'packages' in data:
                     for k, v in data['packages'].items():
                         k1 = "/".join(k.split('/')[1:])  # remove node_modules/
                         pkg = f"{k1}@{v.get('version')}"
                         if pkg in packages:
-                            print(f"Found {pkg} in {filepath}")
+                            print(f"FOUND {pkg} in {filepath}")
                 
                 else:
                     raise Exception("No dependencies specified")

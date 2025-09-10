@@ -22,7 +22,7 @@ cur.execute("CREATE TABLE IF NOT EXISTS repositories (id INTEGER PRIMARY KEY, re
 cur.execute("CREATE TABLE IF NOT EXISTS branches (id INTEGER PRIMARY KEY, repo TEXT NOT NULL, branch TEXT NOT NULL, commit_ref TEXT, commit_date TEXT, commit_email TEXT, tree_ref TEXT, UNIQUE(repo,branch))")
 cur.execute("CREATE TABLE IF NOT EXISTS files (id INTEGER PRIMARY KEY, repo TEXT NOT NULL, branch TEXT NOT NULL, path TEXT NOT NULL, type TEXT, UNIQUE(repo,branch,path))")
 
-# populate db with repositories
+# populate db with repositories (1 api call)
 res = cur.execute("SELECT * FROM repositories")
 if len(res.fetchall()) == 0:
     for repo in get_org_repositories(API_TOKEN, GITHUB_ORG):
@@ -30,7 +30,7 @@ if len(res.fetchall()) == 0:
 
 con.commit()
 
-# populate db with branches
+# populate db with branches (1 api call per repository)
 res = cur.execute("SELECT * FROM branches")
 if len(res.fetchall()) == 0:
     res = cur.execute("SELECT * FROM repositories")
@@ -41,7 +41,7 @@ if len(res.fetchall()) == 0:
 
 con.commit()
 
-# update branches commit data
+# update branches commit data (1 api call per branch - branch count (>8000) is greater than api rate-limit (5000/hr), so you will have to re-run this script for the following to complete)
 res = cur.execute("SELECT * FROM branches WHERE tree_ref IS NULL")
 for branch in res.fetchall():
     response = get_commit_data(API_TOKEN, GITHUB_ORG, branch['repo'], branch['commit_ref'])
@@ -52,7 +52,7 @@ for branch in res.fetchall():
     cur.execute("UPDATE branches SET commit_date=?,commit_email=?,tree_ref=? WHERE id=?", [committer['date'], committer['email'], tree['sha'], branch['id']])
     con.commit()
 
-# get a list of files for each branch
+# get a list of files for each branch (1 api call per branch - branch count (>8000) is greater than api rate-limit (5000/hr), so you will have to re-run this script for the following to complete)
 res = cur.execute("SELECT b.* FROM branches AS b LEFT JOIN files AS f USING(repo,branch) WHERE f.id IS NULL")
 for branch in res.fetchall():
     response = get_tree(API_TOKEN, GITHUB_ORG, branch['repo'], branch['tree_ref'])

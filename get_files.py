@@ -7,15 +7,16 @@ from libs.github import get_file_content
 load_dotenv()
 
 GITHUB_ORG = os.getenv('GITHUB_ORG')
-API_TOKEN = os.getenv('API_PERSONAL_TOKEN') # ensure 'repo' is selected for permissions
+API_TOKEN = os.getenv('API_PERSONAL_TOKEN')  # ensure 'repo' is selected for permissions
 DB_FILEPATH = os.getenv('DB_FILEPATH')
+PATH_PATTERN = '%package-lock.json%'  # in sql format
 
 con = sqlite3.connect(DB_FILEPATH)
 con.row_factory = sqlite3.Row
 cur = con.cursor()
 
 # download all relevant files
-res = cur.execute("SELECT * FROM files WHERE path LIKE '%package-lock.json%'")
+res = cur.execute(f"SELECT * FROM files WHERE path LIKE '{PATH_PATTERN}'")
 for file in res.fetchall():
     filesdir = "./files"
     filepath = f"{file['repo']}/{file['branch']}/{file['path']}"
