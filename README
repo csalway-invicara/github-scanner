@@ -1,0 +1,15 @@
+# Github scanner
+
+## Notes
+- Github has a rate-limit set of 5000 requests and hour.
+- A complete database (as of 10 Sep 2025) can be downloaded from [One Drive](https://invicara-my.sharepoint.com/:u:/p/christian_salway/EcpXFfNILjZJv46fOYfW51UBOzVEPgcjGw6M5YCqvOlAZA?e=cbd0vd)
+
+## Setup
+Create an `.env` file with the following keys
+
+```
+GITHUB_ORG="Invicara"
+API_PERSONAL_TOKEN="<generate a Token (classic) with `repo` and `read:org` scopes>"
+API_FINE_GRAINED_TOKEN="<generate a Fine-grained token for All repositories with 'Contents' read-only and 'Metadata' read-only>"
+DB_FILEPATH="db/github-invicara.db"
+```
