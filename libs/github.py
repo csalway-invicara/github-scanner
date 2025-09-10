@@ -1,5 +1,4 @@
 import requests
-import base64
 
 
 def split_link_header(link_header):

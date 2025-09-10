@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 
 from dotenv import load_dotenv
 
-from libs.github import get_branches, get_org_repositories, get_commit_data, get_tree
+from libs.github import get_branches, get_commit_data, get_org_repositories, get_tree
 
 load_dotenv()
 
