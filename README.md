@@ -1,11 +1,13 @@
-# Github scanner
+# Github Scanner
 
 ## Notes
-- Github has a rate-limit set of 5000 requests and hour.
+
+- Github has a rate-limit set of 5000 requests per hour - which you will hit often!
 - A complete database (as of 10 Sep 2025) can be downloaded from [One Drive](https://invicara-my.sharepoint.com/:u:/p/christian_salway/EcpXFfNILjZJv46fOYfW51UBOzVEPgcjGw6M5YCqvOlAZA?e=cbd0vd)
 
 ## Setup
-Create an `.env` file with the following keys
+
+Create a `.env` file in the root with the following keys:
 
 ```
 GITHUB_ORG="Invicara"
