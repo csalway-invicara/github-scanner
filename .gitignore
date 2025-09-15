@@ -4,4 +4,4 @@ __pycache__/
 files/
 
 .env
-github-invicara.db
+*.db

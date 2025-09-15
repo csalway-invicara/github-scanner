@@ -10,21 +10,21 @@
 
 Create a `.env` file in the root with the following keys:
 
-```
+```conf
 GITHUB_ORG="Invicara"
-API_PERSONAL_TOKEN="<generate a Token (classic) with `repo` and `read:org` scopes>"
+API_PERSONAL_TOKEN="<generate a Token (classic) with `repo`>"
 API_FINE_GRAINED_TOKEN="<generate a Fine-grained token for All repositories with 'Contents' read-only and 'Metadata' read-only>"
-DB_FILEPATH="db/github-invicara.db"
+DB_FILEPATH="github-invicara.db"
 ```
 
 Create a python virtual environment:
 
+```shell
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install -U pip
+python -m pip install -r requirements.txt
 ```
- python -m venv .venv
- source .venv/bin/activate
- python -m pip install -U pip
- python -m pip install -r requirements.txt
- ```
 
 Populate the database first by running `python populate_database.py` -  you will have to run this several times as GitHub API is rate-limited to 5000 req/hr.
 
