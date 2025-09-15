@@ -1,6 +1,5 @@
 import os
 import sqlite3
-
 from dotenv import load_dotenv
 from libs.github import get_file_content
 

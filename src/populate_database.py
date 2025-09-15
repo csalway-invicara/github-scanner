@@ -1,30 +1,13 @@
 import os
 import sqlite3
-import time
-from datetime import datetime
-
 from dotenv import load_dotenv
-
-from libs.github import (get_branches, get_commit_data, get_org_repositories,
-                         get_rate_limit, get_tree)
+from libs.github import (get_branches, get_commit_data, get_org_repositories, get_tree)
 
 load_dotenv()
 
 GITHUB_ORG = os.getenv('GITHUB_ORG')
 API_TOKEN = os.getenv('API_PERSONAL_TOKEN')
 DB_FILEPATH = os.getenv('DB_FILEPATH')
-
-
-def api_rate_limit_check():
-    while 1:
-        rate = get_rate_limit(API_TOKEN)['rate']
-        if rate['remaining'] > 0:
-            break
-        resets = datetime.fromtimestamp(int(rate['reset']))
-        seconds_until_reset = int((resets - datetime.now()).total_seconds())
-        print(f"No more API calls available. Waiting {seconds_until_reset} seconds until {resets.strftime('%Y-%m-%d %H:%M:%S')}.")
-        time.sleep(seconds_until_reset + 5)  # add a buffer
-    return
 
 
 con = sqlite3.connect(DB_FILEPATH)
@@ -56,9 +39,8 @@ if answer.strip().lower() == "y":
 # update branches commit data (1 api call per branch - circa 8000  Nb: api rate-limit 5000req/hr)
 res = cur.execute("SELECT * FROM branches WHERE tree_ref IS NULL")
 for branch in res.fetchall():
-    api_rate_limit_check()
-    response = get_commit_data(API_TOKEN, GITHUB_ORG, branch['repo'], branch['commit_ref'])
-    commit = response['commit']
+    data = get_commit_data(API_TOKEN, GITHUB_ORG, branch['repo'], branch['commit_ref'])
+    commit = data['commit']
     committer = commit['committer']
     tree = commit['tree']
     print(f"Updating branch commit info for {branch['repo']}/{branch['branch']}: {committer['date']} {committer['name']} <{committer['email']}> {tree['sha']}")
@@ -68,7 +50,6 @@ for branch in res.fetchall():
 # get a list of files for each branch (1 api call per branch - circa 8000  Nb: api rate-limit 5000req/hr)
 res = cur.execute("SELECT b.* FROM branches AS b LEFT JOIN files AS f USING(repo,branch) WHERE f.id IS NULL")
 for branch in res.fetchall():
-    api_rate_limit_check()
     response = get_tree(API_TOKEN, GITHUB_ORG, branch['repo'], branch['tree_ref'])
     for obj in response['tree']:
         if obj['type'] == 'tree':  # subdir

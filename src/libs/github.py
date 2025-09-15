@@ -1,4 +1,44 @@
 import requests
+from requests import Response
+import time
+from datetime import datetime
+
+
+def get_rate_limit(api_token):
+    # https://docs.github.com/en/rest/rate-limit/rate-limit?apiVersion=2022-11-28#get-rate-limit-status-for-the-authenticated-user
+    url = "https://api.github.com/rate_limit"
+    response = requests.get(url, headers={
+        "Accept": "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+        "Authorization": f"Bearer {api_token}"
+    })
+    response.raise_for_status()
+    return response.json()
+
+
+def wait_rate_limit(api_token):
+    while 1:
+        rate = get_rate_limit(api_token)['rate']
+        if rate['remaining'] > 0:
+            break
+        resets = datetime.fromtimestamp(int(rate['reset']))
+        seconds_until_reset = int((resets - datetime.now()).total_seconds())
+        print(
+            f"No more API calls available. Waiting {seconds_until_reset} seconds until {resets.strftime('%Y-%m-%d %H:%M:%S')}.")
+        time.sleep(seconds_until_reset + 5)  # add a buffer
+    return
+
+
+def get_response(api_token, url, hdrs={}) -> Response:
+    # https://docs.github.com/en/rest/authentication/authenticating-to-the-rest-api?apiVersion=2022-11-28
+    wait_rate_limit(api_token)
+    response = requests.get(url, headers={
+        "Accept": "application/vnd.github+json",
+        "X-GitHub-Api-Version": "2022-11-28",
+        "Authorization": f"Bearer {api_token}"
+    } | hdrs)  # This method updates the original dictionary (python 3.9+)
+    response.raise_for_status()
+    return response
 
 
 def split_link_header(link_header):
@@ -14,18 +54,7 @@ def split_link_header(link_header):
     return links
 
 
-def get_response(api_token, url, hdrs={}):
-    # https://docs.github.com/en/rest/authentication/authenticating-to-the-rest-api?apiVersion=2022-11-28
-    response = requests.get(url, headers={
-        "Accept": "application/vnd.github+json",
-        "X-GitHub-Api-Version": "2022-11-28",
-        "Authorization": f"Bearer {api_token}"
-    } | hdrs)  # This method updates the original dictionary (python 3.9+)
-    response.raise_for_status()
-    return response
-
-
-def get_paged_response(api_token, url, key=None):
+def get_paged_response(api_token, url, key=None) -> dict | list:
     # https://docs.github.com/en/rest/using-the-rest-api/using-pagination-in-the-rest-api?apiVersion=2022-11-28
     response = get_response(api_token, url)
     data = response.json()  # list or dict
@@ -53,7 +82,7 @@ def get_branches(api_token, owner, repo):
     return get_paged_response(api_token, url)
 
 
-def get_commit_data(api_token, owner, repo, ref, key='files'):
+def get_commit_data(api_token, owner, repo, ref, key='files') -> dict | list:
     # https://docs.github.com/en/rest/commits/commits?apiVersion=2022-11-28#get-a-commit
     url = f"https://api.github.com/repos/{owner}/{repo}/commits/{ref}?per_page=100&page=1"
     return get_paged_response(api_token, url, key)
@@ -73,10 +102,3 @@ def get_file_content(api_token, owner, repo, branch, path):
         "Accept": "application/vnd.github.raw+json"
     })
     return response.content  # binary data
-
-
-def get_rate_limit(api_token):
-    # https://docs.github.com/en/rest/rate-limit/rate-limit?apiVersion=2022-11-28#get-rate-limit-status-for-the-authenticated-user
-    url = "https://api.github.com/rate_limit"
-    response = get_response(api_token, url)
-    return response.json()

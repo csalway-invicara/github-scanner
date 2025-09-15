@@ -1,8 +1,6 @@
 import os
 from datetime import datetime
-
 from dotenv import load_dotenv
-
 from libs.github import get_rate_limit
 
 load_dotenv()

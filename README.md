@@ -26,7 +26,7 @@ python -m pip install -U pip
 python -m pip install -r requirements.txt
 ```
 
-Populate the database first by running `python populate_database.py` -  you will have to run this several times as GitHub API is rate-limited to 5000 req/hr.
+Populate the database first by running `python populate_database.py` -  you may have to run this several times as GitHub API is rate-limited to 5000 req/hr.
 
 Then run `python get_files.py` to download the required file (specified in `PATH_PATTERN`) from all branches in all repo's.
 
